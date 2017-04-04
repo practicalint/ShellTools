@@ -25,7 +25,7 @@
 # but due to it's idempotent nature could be called at any time to ensure the current version of the environment exists.
 ###
 
-## declare array of dirs needed
+## declare array of dirs/vars needed
 #   (you can access them using echo "${arr[0]}", "${arr[1]}" also)
 declare -a dirList=("bin" 
                 	"data"
@@ -34,7 +34,6 @@ declare -a dirList=("bin"
                 	"archive"
                 	"etc"
                 	)
-
 
 #
 # Functions:
@@ -54,7 +53,7 @@ fi
 #   (you can access them using echo "${arr[0]}", "${arr[1]}" also)
 # declare -a dirList=("bin" 
                 	# "data"
-                	# "logs"
+                	# "log"
                 	# "lib"
                 	# "archive"
                 	# "etc"
@@ -186,7 +185,7 @@ cfpSetEnv() {
 DEFAULT_ROOT='/usr/local'
 export ROOT_DIR=$DEFAULT_ROOT/$APP_INST
 export APP_DIR=$ROOT_DIR
-## now loop through the array and create as needed
+## now loop through the array and export dir vars
 for dirName in "${dirList[@]}"
   do
 	dirNameFull=$ROOT_DIR/${dirName^^} # Bash 4.0 and later uppercase
@@ -203,19 +202,31 @@ if [ -z "$SUB_APP" ] ;
   then 
   export SUB_ROOT_DIR=
   export SUB_APP_DIR=
-  export SUB_DATA_DIR=
-  export SUB_BIN_DIR=
-  export SUB_LOG_DIR=
-  export SUB_ARCHIVE_DIR=
-  export SUB_LIB_DIR=
+## now loop through the array and export to clear vars
+  for dirName in "${dirList[@]}"
+    do
+	  dirNameFull=$SUB_ROOT_DIR/${dirName^^} # Bash 4.0 and later uppercase
+      export SUB_${dirName^^}_DIR=$ROOT_DIR/$dirName
+    done
+  # export SUB_DATA_DIR=
+  # export SUB_BIN_DIR=
+  # export SUB_LOG_DIR=
+  # export SUB_ARCHIVE_DIR=
+  # export SUB_LIB_DIR=
 else
   export SUB_ROOT_DIR=$ROOT_DIR/$SUB_APP
   export SUB_APP_DIR=$SUB_ROOT_DIR
-  export SUB_DATA_DIR=$SUB_ROOT_DIR/data
-  export SUB_BIN_DIR=$SUB_ROOT_DIR/bin
-  export SUB_LOG_DIR=$SUB_ROOT_DIR/logs
-  export SUB_ARCHIVE_DIR=$SUB_ROOT_DIR/archive
-  export SUB_LIB_DIR=$SUB_ROOT_DIR/lib
+## now loop through the array and export to clear vars
+  for dirName in "${dirList[@]}"
+    do
+	  dirNameFull=$SUB_ROOT_DIR/${dirName^^} # Bash 4.0 and later uppercase
+      export SUB_${dirName^^}_DIR=$SUB_ROOT_DIR/$dirName
+    done
+  # export SUB_DATA_DIR=$SUB_ROOT_DIR/data
+  # export SUB_BIN_DIR=$SUB_ROOT_DIR/bin
+  # export SUB_LOG_DIR=$SUB_ROOT_DIR/logs
+  # export SUB_ARCHIVE_DIR=$SUB_ROOT_DIR/archive
+  # export SUB_LIB_DIR=$SUB_ROOT_DIR/lib
 fi
 
 # TODO: figure out how to log using called script name instead of top script name
@@ -239,12 +250,17 @@ WriteLog "Show CFP Environment Variables: "
 WriteLog "SCRIPT_NAME= $SCRIPT_NAME "
 WriteLog "APP_INST= $APP_INST "
 WriteLog "ROOT_DIR= $ROOT_DIR "
-WriteLog "DATA_DIR= $DATA_DIR "
-WriteLog "BIN_DIR= $BIN_DIR "
-WriteLog "LOG_DIR= $LOG_DIR "
-WriteLog "ARCHIVE_DIR= $ARCHIVE_DIR "
 WriteLog "APP_DIR= $APP_DIR "
-WriteLog "LIB_DIR= $LIB_DIR "
+## now loop through the array and export dir vars
+for dirName in "${dirList[@]}"
+  do
+    WriteLog "${dirName^^}_DIR= ${dirName^^}_DIR "
+  done
+# WriteLog "DATA_DIR= $DATA_DIR "
+# WriteLog "BIN_DIR= $BIN_DIR "
+# WriteLog "LOG_DIR= $LOG_DIR "
+# WriteLog "ARCHIVE_DIR= $ARCHIVE_DIR "
+# WriteLog "LIB_DIR= $LIB_DIR "
 
 if [ -z "$SUB_APP" ] ;
   then 
@@ -252,12 +268,17 @@ if [ -z "$SUB_APP" ] ;
 else
   WriteLog "SUB_APP= $SUB_APP "
   WriteLog "SUB_ROOT_DIR= $SUB_ROOT_DIR "
-  WriteLog "SUB_DATA_DIR= $SUB_DATA_DIR "
-  WriteLog "SUB_BIN_DIR= $SUB_BIN_DIR "
-  WriteLog "SUB_LOG_DIR= $SUB_LOG_DIR "
-  WriteLog "SUB_ARCHIVE_DIR= $SUB_ARCHIVE_DIR "
   WriteLog "SUB_APP_DIR= $SUB_APP_DIR "
-  WriteLog "SUB_LIB_DIR= $SUB_LIB_DIR "
+## now loop through the array and export dir vars
+for dirName in "${dirList[@]}"
+  do
+    WriteLog "SUB_${dirName^^}_DIR= SUB_${dirName^^}_DIR "
+  done
+  # WriteLog "SUB_DATA_DIR= $SUB_DATA_DIR "
+  # WriteLog "SUB_BIN_DIR= $SUB_BIN_DIR "
+  # WriteLog "SUB_LOG_DIR= $SUB_LOG_DIR "
+  # WriteLog "SUB_ARCHIVE_DIR= $SUB_ARCHIVE_DIR "
+  # WriteLog "SUB_LIB_DIR= $SUB_LIB_DIR "
 fi
 
 WriteLog "TIMESTAMP= $TIMESTAMP "
@@ -337,8 +358,9 @@ chmod -R 775 $ROOT_ROOT_DIR
 # Set up the environment with the app and sub-app
 # echo "runnning cfpSetEnv.sh"
 # source $ROOT_DIR/bin/cfpSetEnv.sh  # load environment functions (hopefully script came with)
-echo "running cfpSetApp  $APP_INST $SUB_APP "
-cfpSetApp  $APP_INST $SUB_APP  # set environment 
+# echo "running cfpSetApp  $APP_INST $SUB_APP "
+# cfpSetApp  $APP_INST $SUB_APP  # set environment 
+cfpSetEnv  # set environment 
 LogStart "$*"
 
 WriteDebugLog "this is only a debugging log item"
@@ -350,6 +372,10 @@ LogStop
 }
 
 # ============================================================
+
+# probably not needed if script is sourced, but makes functions available to anything running in the environment
+export -f cfpSetApp cfpSetEnv LogStart LogStop WriteLog WriteDebugLog
+
 #  if run stand-alone parms will be present, will call functions in order:
 #  if run with no parms it will just stand-alone parms will be present, will call functions in order:
 # Parms APP_INST APP_NAME
@@ -368,7 +394,7 @@ if [ $# -gt 0 ]; then
 #	LogStart "$*"
 #	cfpShowEnv
   fi
-cfpShowEnv
+# cfpShowEnv
 LogStop
 fi
 
