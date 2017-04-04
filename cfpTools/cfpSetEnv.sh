@@ -24,9 +24,21 @@
 # This would normally be called at the creation of a new instance,
 # but due to it's idempotent nature could be called at any time to ensure the current version of the environment exists.
 ###
+
+## declare array of dirs needed
+#   (you can access them using echo "${arr[0]}", "${arr[1]}" also)
+declare -a dirList=("bin" 
+                	"data"
+                	"logs"
+                	"lib"
+                	"archive"
+                	"etc"
+                	)
+
+
 #
 # Functions:
-
+#
 cfpCheckCreateDirs() {
 # Create the parent directory if it does not exist
 # This can be called for the top instance directory or a lower App directory structure.
@@ -40,13 +52,13 @@ fi
 
 ## declare array of dirs needed
 #   (you can access them using echo "${arr[0]}", "${arr[1]}" also)
-declare -a dirList=("bin" 
-                	"data"
-                	"logs"
-                	"lib"
-                	"archive"
-                	"etc"
-                	)
+# declare -a dirList=("bin" 
+                	# "data"
+                	# "logs"
+                	# "lib"
+                	# "archive"
+                	# "etc"
+                	# )
 
 ## now loop through the array and create as needed
 for dirName in "${dirList[@]}"
@@ -135,7 +147,7 @@ if [ -z "$APP_INST" ]
 fi
 if [ -z "$SUB_APP" ]
   then
-		SUB_APP="none"   # default for sub app is to not have any
+		SUB_APP=""   # default for sub app is to not have any
 fi
 if [ -z "$BASE_DIR" ]
   then
@@ -160,8 +172,10 @@ fi
 cfpSetApp() {
 
 #  set script name app instance and name from caller
-export APP_INST=$1
-export SUB_APP=$2
+# export APP_INST=$1
+# export SUB_APP=$2
+cfpParseArgs
+cfpSetDefaultArgs
 cfpSetEnv
 
 }
@@ -172,11 +186,18 @@ cfpSetEnv() {
 DEFAULT_ROOT='/usr/local'
 export ROOT_DIR=$DEFAULT_ROOT/$APP_INST
 export APP_DIR=$ROOT_DIR
-export DATA_DIR=$ROOT_DIR/data
-export BIN_DIR=$ROOT_DIR/bin
-export LOG_DIR=$ROOT_DIR/logs
-export ARCHIVE_DIR=$DATA_DIR/archive
-export LIB_DIR=$ROOT_DIR/lib
+## now loop through the array and create as needed
+for dirName in "${dirList[@]}"
+  do
+	dirNameFull=$ROOT_DIR/${dirName^^} # Bash 4.0 and later uppercase
+    export ${dirName^^}_DIR=$ROOT_DIR/$dirName
+  done
+
+# export DATA_DIR=$ROOT_DIR/data
+# export BIN_DIR=$ROOT_DIR/bin
+# export LOG_DIR=$ROOT_DIR/logs
+# export ARCHIVE_DIR=$DATA_DIR/archive
+# export LIB_DIR=$ROOT_DIR/lib
 
 if [ -z "$SUB_APP" ] ;
   then 
@@ -294,7 +315,8 @@ ROOT_ROOT_DIR="$ROOT_DIR"  # save this
 # cp ./*.sh $ROOT_DIR/bin
 # cp ./*.lib $ROOT_DIR/lib
 
-if [ "$SUB_APP" != "none" ]
+# if [ "$SUB_APP" != "none" ]
+if [ -z "$SUB_APP" ] ;
 	then
 		if [ ! -e $ROOT_DIR/$SUB_APP ]
 			then
