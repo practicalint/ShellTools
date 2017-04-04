@@ -155,67 +155,6 @@ fi
 
 }  # End cfpSetDefaultArgs
 
-cfpCreateEnv() {
-# The idea is this is run with a generated command with the following arguments
-#  (defaults supplied in case not present)
-
-cfpParseArgs
-cfpSetDefaultArgs
-
-echo APP_INST  = "${APP_INST}"
-echo SUB_APP   = "${SUB_APP}"
-echo BASE_DIR  = "${BASE_DIR}"
-echo ADMIN_GROUP  = "${ADMIN_GROUP}"
-echo DEFAULT   = "${DEFAULT}"
-echo CREATE   = "${CREATE}"
-
-export ROOT_DIR="$BASE_DIR/$APP_INST"
-cfpCheckCreateDirs
-ROOT_ROOT_DIR="$ROOT_DIR"  # save this
-
-# Get Files from the location they are kept for this current data center/CSP type
-# Possibly were unzipped with this file on instance creation
-
-#TODO  fix this, like it moves the running script too!
-# doing copies for now
-# mv ./*.sh $ROOT_DIR/bin
-# mv ./*.lib $ROOT_DIR/lib
-# cp ./*.sh $ROOT_DIR/bin
-# cp ./*.lib $ROOT_DIR/lib
-
-if [ "$SUB_APP" <> "none" ]
-	then
-		if [ ! -e $ROOT_DIR/$SUB_APP ]
-			then
-				echo "=== Sub App directory $ROOT_DIR/$SUB_APP not found, creating it ==="
-				ROOT_DIR_HOLD=$ROOT_DIR
-				export ROOT_DIR="$ROOT_ROOT_DIR/$SUB_APP"  #Set the top and do it again for sub app
-				cfpCheckCreateDirs
-				export ROOT_DIR="$ROOT_DIR_HOLD"  #Reset the var
-		fi
-fi
-
-cfpCheckCreateGroup $ADMIN_GROUP
-
-chgrp -R $ADMIN_GROUP $ROOT_ROOT_DIR # do this stuff regardless to make sure it didn't get undone
-chmod -R 775 $ROOT_ROOT_DIR 
-
-
-# Set up the environment with the app and sub-app
-echo "runnning cfpSetEnv.sh"
-source $ROOT_DIR/bin/cfpSetEnv.sh  # load environment functions (hopefully script came with)
-echo "running cfpSetApp  $APP_INST $SUB_APP "
-cfpSetApp  $APP_INST $SUB_APP  # set environment 
-LogStart "$*"
-
-WriteDebugLog "this is only a debugging log item"
-
-LogStop
-
-# End cfpCreateEnv
-
-}
-
 
 cfpSetApp() {
 
@@ -326,7 +265,68 @@ WriteLog "Start Parms=$1"
 LogStop() {
 WriteLog "Stop"
 }
+cfpCreateEnv() {
+# The idea is this is run with a generated command with the following arguments
+#  (defaults supplied in case not present)
 
+cfpParseArgs
+cfpSetDefaultArgs
+
+echo APP_INST  = "${APP_INST}"
+echo SUB_APP   = "${SUB_APP}"
+echo BASE_DIR  = "${BASE_DIR}"
+echo ADMIN_GROUP  = "${ADMIN_GROUP}"
+echo DEFAULT   = "${DEFAULT}"
+echo CREATE   = "${CREATE}"
+
+export ROOT_DIR="$BASE_DIR/$APP_INST"
+cfpCheckCreateDirs
+ROOT_ROOT_DIR="$ROOT_DIR"  # save this
+
+# Get Files from the location they are kept for this current data center/CSP type
+# Possibly were unzipped with this file on instance creation
+
+#TODO  fix this, like it moves the running script too!
+# doing copies for now
+# mv ./*.sh $ROOT_DIR/bin
+# mv ./*.lib $ROOT_DIR/lib
+# cp ./*.sh $ROOT_DIR/bin
+# cp ./*.lib $ROOT_DIR/lib
+
+if [ "$SUB_APP" <> "none" ]
+	then
+		if [ ! -e $ROOT_DIR/$SUB_APP ]
+			then
+				echo "=== Sub App directory $ROOT_DIR/$SUB_APP not found, creating it ==="
+				ROOT_DIR_HOLD=$ROOT_DIR
+				export ROOT_DIR="$ROOT_ROOT_DIR/$SUB_APP"  #Set the top and do it again for sub app
+				cfpCheckCreateDirs
+				export ROOT_DIR="$ROOT_DIR_HOLD"  #Reset the var
+		fi
+fi
+
+cfpCheckCreateGroup $ADMIN_GROUP
+
+chgrp -R $ADMIN_GROUP $ROOT_ROOT_DIR # do this stuff regardless to make sure it didn't get undone
+chmod -R 775 $ROOT_ROOT_DIR 
+
+
+# Set up the environment with the app and sub-app
+# echo "runnning cfpSetEnv.sh"
+# source $ROOT_DIR/bin/cfpSetEnv.sh  # load environment functions (hopefully script came with)
+echo "running cfpSetApp  $APP_INST $SUB_APP "
+cfpSetApp  $APP_INST $SUB_APP  # set environment 
+LogStart "$*"
+
+WriteDebugLog "this is only a debugging log item"
+
+LogStop
+
+# End cfpCreateEnv
+
+}
+
+# ============================================================
 #  if run stand-alone parms will be present, will call functions in order:
 #  if run with no parms it will just stand-alone parms will be present, will call functions in order:
 # Parms APP_INST APP_NAME
@@ -348,6 +348,5 @@ if [ $# -gt 0 ]; then
 cfpShowEnv
 LogStop
 fi
-# this exits terminal: exit 0
 
-EOF
+# End cfSetEnv.sh
