@@ -45,6 +45,7 @@ declare -a dirList=("bin"
                 	"logs"
                 	"lib"
                 	"archive"
+                	"etc"
                 	)
 
 ## now loop through the array and create as needed
@@ -293,7 +294,7 @@ ROOT_ROOT_DIR="$ROOT_DIR"  # save this
 # cp ./*.sh $ROOT_DIR/bin
 # cp ./*.lib $ROOT_DIR/lib
 
-if [ "$SUB_APP" <> "none" ]
+if [ "$SUB_APP" != "none" ]
 	then
 		if [ ! -e $ROOT_DIR/$SUB_APP ]
 			then
