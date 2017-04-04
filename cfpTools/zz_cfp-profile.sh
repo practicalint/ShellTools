@@ -15,9 +15,7 @@ fi
 export ETSAPP=jira
 export ETSAPPVER=5.1
 export ETSAPPINST=test03
-export CFPDIR=/usr/local/$cfpcore
-export ATLDATA=/var/atlassian/application-data
-export ATLAPP=/opt/atlassian
+export CFPDIR=/usr/local/cfpcore
 export APPDATA=$ATLDATA/$ETSAPP-$ETSAPPINST
 export APPDIR=$ATLAPP/$ETSAPP$ETSAPPVER
 export APP_HOME=$APPDIR

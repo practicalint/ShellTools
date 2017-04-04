@@ -56,19 +56,14 @@ export -f pathremove pathprepend pathappend
 export HISTSIZE=1000
 export HISTIGNORE="&:[bf]g:exit"
 
-# Set some defaults for graphical systems
-#TODO: research this
-# export XDG_DATA_DIRS=/usr/share/
-# export XDG_CONFIG_DIRS=/etc/xdg/
-
 # Setup a red prompt for root and a green one for users.
 NORMAL="\[\e[0m\]"
 RED="\[\e[1;31m\]"
 GREEN="\[\e[1;32m\]"
 if [[ $EUID == 0 ]] ; then
-  PS1="$RED\u [ $NORMAL\w$RED ]# $NORMAL"
+  PS1="$RED\u@$NORMAL\h:\l $RED[\w]$NORMAL\\$ "
 else
-  PS1="$GREEN\u [ $NORMAL\w$GREEN ]\$ $NORMAL"
+  PS1="$GREEN\u@$NORMAL\h:\l $GREEN[\w]$NORMAL\\$ "
 fi
 
 # If this script were used as /etc/profile, this would be needed to run profile.d add-ons
@@ -80,17 +75,20 @@ fi
 # done
 
 unset script RED GREEN NORMAL
-cfpSetApp  # set environment 
+
+cfpSetApp cfpcore # set environment 
 LogStart "$*"
  
 
 # Aliases
 alias lsa='ls -la'
+alias la='ls -la'
 alias cdad='cd $APPDATA'
 alias cdap='cd $APPDIR'
-alias cdets='cd $ETSDIR'
+alias cdcfp='cd $APPDIR'
 alias pse='ps -ef'
 
+LogStop
 
 # End /etc/profile.d/aa_cfpProfileStart.sh
 EOF

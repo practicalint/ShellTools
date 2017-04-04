@@ -334,8 +334,7 @@ if [ $# -gt 0 ]; then
   cfpParseArgs $*
   cfpSetDefaultArgs
 # echo $# $1 $2 $3
-  LogStart
-  echo "Create $CREATE"
+  LogStart "$*"
   if [ $CREATE -eq $TRUE ]; then
     echo "Create requested"
     cfpCreateEnv
@@ -343,7 +342,7 @@ if [ $# -gt 0 ]; then
     echo "SetApp defaulted"
 #	cfpSetApp $1 $2
 	cfpSetEnv
-#	LogStart
+#	LogStart "$*"
 #	cfpShowEnv
   fi
 cfpShowEnv
@@ -351,4 +350,4 @@ LogStop
 fi
 # this exits terminal: exit 0
 
-
+EOF
