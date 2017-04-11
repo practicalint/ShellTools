@@ -28,8 +28,9 @@
 ## declare array of dirs/vars needed
 #   (you can access them using echo "${arr[0]}", "${arr[1]}" also)
 declare -a dirList=("bin" 
+                	"sbin"
                 	"data"
-                	"logs"
+                	"log"
                 	"lib"
                 	"archive"
                 	"etc"
@@ -38,6 +39,64 @@ declare -a dirList=("bin"
 #
 # Functions:
 #
+# =====  Utility Functions  ====================================
+# Functions to help us manage paths.  Second argument is the name of the
+# path variable to be modified (default: PATH)
+
+pathmunge () {
+    case ":${PATH}:" in
+        *:"$1":*)
+            ;;
+        *)
+            if [ "$2" = "after" ] ; then
+                PATH=$PATH:$1
+            else
+                PATH=$1:$PATH
+            fi
+    esac
+}
+
+
+pathremove () {
+        local IFS=':'
+        local NEWPATH
+        local DIR
+        local PATHVARIABLE=${2:-PATH}
+        for DIR in ${!PATHVARIABLE} ; do
+                if [ "$DIR" != "$1" ] ; then
+                  NEWPATH=${NEWPATH:+$NEWPATH:}$DIR
+                fi
+        done
+        export $PATHVARIABLE="$NEWPATH"
+}
+
+#  log writer
+WriteLog() {
+export TIMESTAMP=`date +%Y%m%d-%H%M%S`
+echo $TIMESTAMP $SCRIPT_NAME $1
+}
+
+#  debug log writer
+WriteDebugLog() {
+if [ $DEBUG_ON -eq $TRUE ]; then
+	WriteLog "$1"
+fi
+}
+
+#  log start of process
+LogStart() {
+WriteLog "Start Parms=$1"
+}
+
+#  log stop of process
+LogStop() {
+WriteLog "Stop"
+}
+
+export -f pathmunge pathremove LogStart LogStop WriteLog WriteDebugLog
+
+# =====  Environment Management Functions  ====================================
+
 cfpCheckCreateDirs() {
 # Create the parent directory if it does not exist
 # This can be called for the top instance directory or a lower App directory structure.
@@ -48,16 +107,6 @@ if [ ! -e $ROOT_DIR ]
 		echo "=== Root directory $ROOT_DIR not found, creating it ==="
 		mkdir "$ROOT_DIR" 
 fi
-
-## declare array of dirs needed
-#   (you can access them using echo "${arr[0]}", "${arr[1]}" also)
-# declare -a dirList=("bin" 
-                	# "data"
-                	# "log"
-                	# "lib"
-                	# "archive"
-                	# "etc"
-                	# )
 
 ## now loop through the array and create as needed
 for dirName in "${dirList[@]}"
@@ -76,16 +125,15 @@ done
 
 cfpCheckCreateGroup() {
 # Check for group existing and add if not
-egrep -i "^$1" /etc/group;
+egrep -i "^$ADMIN_GROUP" /etc/group;
 if [ $? -eq 0 ]; then
-   echo "$1 Group Exists"
+   echo "$ADMIN_GROUP Group Exists"
 else
-   echo "Group $1 does not exist "
-   groupadd $1
+   echo "Group $ADMIN_GROUP does not exist "
+   groupadd $ADMIN_GROUP
 fi
 
 }
-
 
 cfpParseArgs() {
 
@@ -133,7 +181,6 @@ while [[ $# -gt 0 ]]
 		esac
 		shift # past argument or value
 done
-echo "Create after args $CREATE"
 }  # End cfpSetArgs
 
 cfpSetDefaultArgs() {
@@ -150,7 +197,7 @@ if [ -z "$SUB_APP" ]
 fi
 if [ -z "$BASE_DIR" ]
   then
-		BASE_DIR="/usr/local/"   # default for base directory
+		BASE_DIR="/usr/local"   # default for base directory
 fi
 if [ -z "$ADMIN_GROUP" ]
   then
@@ -168,11 +215,22 @@ fi
 }  # End cfpSetDefaultArgs
 
 
+#  store the variables defining the environment to reset later
+cfpStoreEnv() {
+
+WriteLog "Storing CFP Environment Variables to ${BASE_DIR}/bin/cfpRetrieveEnv.sh "
+cat << EOF > "${BASE_DIR}/bin/cfpRetrieveEnv.sh"
+#!/bin/bash
+source ${BIN_DIR}/cfpSetEnv.sh --appinstance ${APP_INST} --subapp ${SUB_APP} 
+EOF
+
+chown $ADMIN_GROUP ${BASE_DIR}/bin/cfpRetrieveEnv.sh
+chmod +x ${BASE_DIR}/bin/cfpRetrieveEnv.sh
+}
+
 cfpSetApp() {
 
 #  set script name app instance and name from caller
-# export APP_INST=$1
-# export SUB_APP=$2
 cfpParseArgs
 cfpSetDefaultArgs
 cfpSetEnv
@@ -181,52 +239,45 @@ cfpSetEnv
 
 cfpSetEnv() {
 
+#  main app vars
+export APP_INST="$APP_INST"
+export SUB_APP="$SUB_APP"
 #  root app directory and sub-directories
-DEFAULT_ROOT='/usr/local'
-export ROOT_DIR=$DEFAULT_ROOT/$APP_INST
+# DEFAULT_ROOT="/usr/local"
+export ROOT_DIR="$BASE_DIR/$APP_INST"
 export APP_DIR=$ROOT_DIR
 ## now loop through the array and export dir vars
 for dirName in "${dirList[@]}"
   do
-	dirNameFull=$ROOT_DIR/${dirName^^} # Bash 4.0 and later uppercase
+    dirNameFull=$ROOT_DIR/${dirName^^} # Bash 4.0 and later uppercase
     export ${dirName^^}_DIR=$ROOT_DIR/$dirName
   done
 
-# export DATA_DIR=$ROOT_DIR/data
-# export BIN_DIR=$ROOT_DIR/bin
-# export LOG_DIR=$ROOT_DIR/logs
-# export ARCHIVE_DIR=$DATA_DIR/archive
-# export LIB_DIR=$ROOT_DIR/lib
+# put bin dir in path
+pathmunge "$BIN_DIR" "after"
+pathmunge "$SBIN_DIR" "after"
 
 if [ -z "$SUB_APP" ] ;
   then 
-  export SUB_ROOT_DIR=
-  export SUB_APP_DIR=
-## now loop through the array and export to clear vars
+    unset SUB_ROOT_DIR
+    unset SUB_APP_DIR
+## now loop through the array and unset to clear vars
   for dirName in "${dirList[@]}"
     do
-	  dirNameFull=$SUB_ROOT_DIR/${dirName^^} # Bash 4.0 and later uppercase
-      export SUB_${dirName^^}_DIR=$ROOT_DIR/$dirName
+      unset "SUB_${dirName^^}_DIR"
     done
-  # export SUB_DATA_DIR=
-  # export SUB_BIN_DIR=
-  # export SUB_LOG_DIR=
-  # export SUB_ARCHIVE_DIR=
-  # export SUB_LIB_DIR=
 else
-  export SUB_ROOT_DIR=$ROOT_DIR/$SUB_APP
-  export SUB_APP_DIR=$SUB_ROOT_DIR
+  export "SUB_ROOT_DIR=$ROOT_DIR/$SUB_APP"
+  export "SUB_APP_DIR=$SUB_ROOT_DIR"
 ## now loop through the array and export to clear vars
   for dirName in "${dirList[@]}"
     do
-	  dirNameFull=$SUB_ROOT_DIR/${dirName^^} # Bash 4.0 and later uppercase
-      export SUB_${dirName^^}_DIR=$SUB_ROOT_DIR/$dirName
+      dirNameFull="$SUB_ROOT_DIR/${dirName^^}" # Bash 4.0 and later uppercase
+      export "SUB_${dirName^^}_DIR=$SUB_ROOT_DIR/$dirName"
     done
-  # export SUB_DATA_DIR=$SUB_ROOT_DIR/data
-  # export SUB_BIN_DIR=$SUB_ROOT_DIR/bin
-  # export SUB_LOG_DIR=$SUB_ROOT_DIR/logs
-  # export SUB_ARCHIVE_DIR=$SUB_ROOT_DIR/archive
-  # export SUB_LIB_DIR=$SUB_ROOT_DIR/lib
+# put bin dir in path
+    pathmunge "$SUB_BIN_DIR" "after"
+    pathmunge "$SUB_SBIN_DIR" "after"
 fi
 
 # TODO: figure out how to log using called script name instead of top script name
@@ -235,10 +286,12 @@ fi
 # echo "\$BASH_SOURCE ${BASH_SOURCE[@]}"
 # echo "0 is $0  dollar_ is $_ "
 
-export SCRIPT_NAME="$( basename $0 )"
+export SCRIPT_NAME="$( basename $BASH_SOURCE )"
 # Timestamp format for filenames
 export TIMESTAMP=`date +%Y%m%d-%H%M%S`
+export ADMIN_GROUP=$ADMIN_GROUP
 
+cfpStoreEnv
 cfpShowEnv
 
 }
@@ -254,13 +307,9 @@ WriteLog "APP_DIR= $APP_DIR "
 ## now loop through the array and export dir vars
 for dirName in "${dirList[@]}"
   do
-    WriteLog "${dirName^^}_DIR= ${dirName^^}_DIR "
+    tempName="${dirName^^}_DIR"
+    WriteLog "$tempName= ${!tempName}"
   done
-# WriteLog "DATA_DIR= $DATA_DIR "
-# WriteLog "BIN_DIR= $BIN_DIR "
-# WriteLog "LOG_DIR= $LOG_DIR "
-# WriteLog "ARCHIVE_DIR= $ARCHIVE_DIR "
-# WriteLog "LIB_DIR= $LIB_DIR "
 
 if [ -z "$SUB_APP" ] ;
   then 
@@ -272,42 +321,18 @@ else
 ## now loop through the array and export dir vars
 for dirName in "${dirList[@]}"
   do
-    WriteLog "SUB_${dirName^^}_DIR= SUB_${dirName^^}_DIR "
+    tempName="SUB_${dirName^^}_DIR"
+    WriteLog "$tempName= ${!tempName}"
   done
-  # WriteLog "SUB_DATA_DIR= $SUB_DATA_DIR "
-  # WriteLog "SUB_BIN_DIR= $SUB_BIN_DIR "
-  # WriteLog "SUB_LOG_DIR= $SUB_LOG_DIR "
-  # WriteLog "SUB_ARCHIVE_DIR= $SUB_ARCHIVE_DIR "
-  # WriteLog "SUB_LIB_DIR= $SUB_LIB_DIR "
 fi
 
 WriteLog "TIMESTAMP= $TIMESTAMP "
 WriteLog "DEBUG_ON= $DEBUG_ON "
+WriteLog "ADMIN_GROUP= $ADMIN_GROUP "
+
 
 }
 
-#  log writer
-WriteLog() {
-export TIMESTAMP=`date +%Y%m%d-%H%M%S`
-echo $TIMESTAMP $SCRIPT_NAME $1
-}
-
-#  debug log writer
-WriteDebugLog() {
-if [ $DEBUG_ON -eq $TRUE ]; then
-	WriteLog "$1"
-fi
-}
-
-#  log start of process
-LogStart() {
-WriteLog "Start Parms=$1"
-}
-
-#  log stop of process
-LogStop() {
-WriteLog "Stop"
-}
 cfpCreateEnv() {
 # The idea is this is run with a generated command with the following arguments
 #  (defaults supplied in case not present)
@@ -326,27 +351,19 @@ export ROOT_DIR="$BASE_DIR/$APP_INST"
 cfpCheckCreateDirs
 ROOT_ROOT_DIR="$ROOT_DIR"  # save this
 
-# Get Files from the location they are kept for this current data center/CSP type
-# Possibly were unzipped with this file on instance creation
-
-#TODO  fix this, like it moves the running script too!
-# doing copies for now
-# mv ./*.sh $ROOT_DIR/bin
-# mv ./*.lib $ROOT_DIR/lib
-# cp ./*.sh $ROOT_DIR/bin
-# cp ./*.lib $ROOT_DIR/lib
-
-# if [ "$SUB_APP" != "none" ]
 if [ -z "$SUB_APP" ] ;
+    then
+    echo "=== No Sub App requested ==="
+else
+#     then
+    if [ ! -e $ROOT_DIR/$SUB_APP ]
 	then
-		if [ ! -e $ROOT_DIR/$SUB_APP ]
-			then
-				echo "=== Sub App directory $ROOT_DIR/$SUB_APP not found, creating it ==="
-				ROOT_DIR_HOLD=$ROOT_DIR
-				export ROOT_DIR="$ROOT_ROOT_DIR/$SUB_APP"  #Set the top and do it again for sub app
-				cfpCheckCreateDirs
-				export ROOT_DIR="$ROOT_DIR_HOLD"  #Reset the var
-		fi
+		echo "=== Sub App directory $ROOT_DIR/$SUB_APP not found, creating it ==="
+		ROOT_DIR_HOLD=$ROOT_DIR
+		export ROOT_DIR="$ROOT_ROOT_DIR/$SUB_APP"  #Set the top and do it again for sub app
+		cfpCheckCreateDirs
+		export ROOT_DIR="$ROOT_DIR_HOLD"  #Reset the var
+	fi
 fi
 
 cfpCheckCreateGroup $ADMIN_GROUP
@@ -374,7 +391,7 @@ LogStop
 # ============================================================
 
 # probably not needed if script is sourced, but makes functions available to anything running in the environment
-export -f cfpSetApp cfpSetEnv LogStart LogStop WriteLog WriteDebugLog
+export -f cfpSetApp cfpSetEnv 
 
 #  if run stand-alone parms will be present, will call functions in order:
 #  if run with no parms it will just stand-alone parms will be present, will call functions in order:
@@ -388,14 +405,10 @@ if [ $# -gt 0 ]; then
     echo "Create requested"
     cfpCreateEnv
   else
-    echo "SetApp defaulted"
-#	cfpSetApp $1 $2
+    echo "SetEnv defaulted"
 	cfpSetEnv
-#	LogStart "$*"
-#	cfpShowEnv
   fi
-# cfpShowEnv
-LogStop
+  LogStop
 fi
 
 # End cfSetEnv.sh
