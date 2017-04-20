@@ -1,0 +1,20 @@
+server dnsinternal.management.cfp
+zone management.cfp
+update delete cfpMgtDNSServer01.management.cfp A
+update add cfpMgtDNSServer01.management.cfp 60 A 10.10.0.16
+update delete dnsinternal.management.cfp A
+update add dnsinternal.management.cfp 60 cname cfpMgtDNSServer01.management.cfp
+show
+send
+update delete cfpMgtDNSServer01EX.management.cfp A
+update add cfpMgtDNSServer01EX.management.cfp 60 A 52.222.66.254
+update delete dnsexternal.management.cfp A
+update add dnsexternal.management.cfp 60 cname cfpMgtDNSServer01EX.management.cfp
+show
+send
+update delete cfpMgtForwardProxy02.management.cfp A
+update add cfpMgtForwardProxy02.management.cfp 60 A 10.10.0.37
+update add forwardproxy.management.cfp 60 cname cfpMgtForwardProxy02.management.cfp
+show
+send
+

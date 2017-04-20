@@ -17,7 +17,7 @@ source $TMP_DIR/cfpSetEnv.sh
 cfpSetApp
 LogStart "$*"
 
-# moving everything into place
+WriteLog "moving everything into place"
 sudo mv $TMP_DIR/aa*.sh /etc/profile.d
 sudo chmod +x /etc/profile.d/aa*.sh
 mv $TMP_DIR/cfp*.sh $BIN_DIR/.
@@ -32,5 +32,14 @@ WriteLog "updating host into DNS"
 mv $TMP_DIR/K*.private* $ETC_DIR/.
 sudo -E $BIN_DIR/cfpUpdateDNSonBoot.sh
 rm -f $TMP_DIR/K*.private*
+
+WriteLog "Installing Discovery Client"
+sudo -E $BIN_DIR/cfpConfigDiscoveryClient.sh
+
+WriteLog "Installing Logging Client"
+sudo -E $BIN_DIR/cfpConfigLoggingClient.sh
+
+WriteLog "Installing NGINX"
+sudo -E $BIN_DIR/cfpConfigNGINX.sh
 
 LogStop

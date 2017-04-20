@@ -1,0 +1,17 @@
+server dnsinternal.management.cfp
+zone management.cfp
+update delete logging.management.cfp A
+update add logging.management.cfp 60 cname cfpMgtGraylog02.management.cfp
+show
+send
+update delete cfpMgtSecretManager01.management.cfp A
+update add cfpMgtSecretManager01.management.cfp 60 A 10.10.10.75
+update delete secretmanager.management.cfp A
+update add secretmanager.management.cfp 60 cname cfpMgtSecretManager01.management.cfp
+show
+send
+update delete artifactrepo.management.cfp A
+update add artifactrepo.management.cfp 60 cname cfpMgtArtifactRepo01.management.cfp
+show
+send
+

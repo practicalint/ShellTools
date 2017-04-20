@@ -47,6 +47,7 @@ unset script RED GREEN NORMAL
 source $BASE_DIR/bin/cfpRetrieveEnv.sh
 
 LogStart "$*"
+source $BIN_DIR/cfpSetProxyEnv.sh
 
 # Aliases
 alias lsa='ls -la'

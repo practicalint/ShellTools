@@ -1,0 +1,37 @@
+server dnsinternal.management.cfp
+zone management.cfp
+update delete cfpMgtDiscovery01.management.cfp A
+update add cfpMgtDiscovery01.management.cfp 60 A 10.10.10.226
+update delete discovery.management.cfp A
+update add discovery.management.cfp 60 cname cfpMgtDiscovery01.management.cfp
+show
+send
+update delete cfpMgtOrchestrator01.management.cfp A
+update add cfpMgtOrchestrator01.management.cfp 60 A 10.10.10.30
+update delete orchestrator.management.cfp A
+update add orchestrator.management.cfp 60 cname cfpMgtOrchestrator01.management.cfp
+show
+send
+update delete cfpMgtContainerCluster01.management.cfp A
+update add cfpMgtContainerCluster01.management.cfp 60 A 10.10.10.30
+update delete containercluster.management.cfp A
+update add containercluster.management.cfp 60 cname cfpMgtContainerCluster01.management.cfp
+show
+send
+update delete cfpMgtSCM01.management.cfp A
+update add cfpMgtSCM01.management.cfp 60 A 10.10.10.100
+update delete scm.management.cfp A
+update add scm.management.cfp 60 cname cfpMgtSCM01.management.cfp
+show
+send
+update delete cfpMgtADC01.management.cfp A
+update add cfpMgtADC01.management.cfp 60 A 10.10.10.47
+update delete adcinternal.management.cfp A
+update add adcinternal.management.cfp 60 cname cfpMgtADC01.management.cfp
+update delete cfpMgtADC01EX.management.cfp A
+update add cfpMgtADC01EX.management.cfp 60 A 52.222.67.174
+update delete adcexternal.management.cfp A
+update add adcexternal.management.cfp 60 cname cfpMgtADC01EX.management.cfp
+show
+send
+
