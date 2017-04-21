@@ -3,6 +3,8 @@ source $BIN_DIR/cfpSetEnv.sh
 cfpSetApp
 LogStart "$*"
 
+source $BIN_DIR/cfpSetProxyEnv.sh
+
 export INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 
 export INSTANCE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)

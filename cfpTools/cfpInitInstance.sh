@@ -31,7 +31,7 @@ sudo -E $BIN_DIR/cfpSetHostnameCentos7.sh
 WriteLog "updating host into DNS"
 mv $TMP_DIR/K*.private* $ETC_DIR/.
 sudo -E $BIN_DIR/cfpUpdateDNSonBoot.sh
-rm -f $TMP_DIR/K*.private*
+rm -f $ETC_DIR/K*.private*
 
 WriteLog "Installing Discovery Client"
 sudo -E $BIN_DIR/cfpConfigDiscoveryClient.sh
@@ -39,7 +39,8 @@ sudo -E $BIN_DIR/cfpConfigDiscoveryClient.sh
 WriteLog "Installing Logging Client"
 sudo -E $BIN_DIR/cfpConfigLoggingClient.sh
 
-WriteLog "Installing NGINX"
-sudo -E $BIN_DIR/cfpConfigNGINX.sh
+#sample app:
+# WriteLog "Installing NGINX"
+# sudo -E $BIN_DIR/cfpConfigNGINX.sh
 
 LogStop
