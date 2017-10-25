@@ -368,7 +368,9 @@ fi
 
 cfpCheckCreateGroup $ADMIN_GROUP
 
-chgrp -R $ADMIN_GROUP $ROOT_ROOT_DIR # do this stuff regardless to make sure it didn't get undone
+# do this stuff regardless to make sure it didn't get undone
+chown -R $ADMIN_GROUP $ROOT_ROOT_DIR
+chgrp -R $ADMIN_GROUP $ROOT_ROOT_DIR
 chmod -R 775 $ROOT_ROOT_DIR 
 
 

@@ -39,8 +39,4 @@ sudo -E $BIN_DIR/cfpConfigDiscoveryClient.sh
 WriteLog "Installing Logging Client"
 sudo -E $BIN_DIR/cfpConfigLoggingClient.sh
 
-#sample app:
-# WriteLog "Installing NGINX"
-# sudo -E $BIN_DIR/cfpConfigNGINX.sh
-
 LogStop

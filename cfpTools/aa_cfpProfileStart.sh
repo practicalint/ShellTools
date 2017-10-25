@@ -29,18 +29,26 @@ fi
 # Setup some environment settings.
 export HISTSIZE=1000
 export HISTIGNORE="&:[bf]g:exit"
+export HISTTIMEFORMAT="%d/%m/%y %T "
 
 # Setup a red prompt for root and a green one for users.
+parse_git_branch() {
+     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+}
+
 NORMAL="\[\e[0m\]"
 RED="\[\e[1;31m\]"
 GREEN="\[\e[1;32m\]"
+CYAN="\[\e[1;36m\]"
+YELLOW="\[\e[1;33m\]"
 if [[ $EUID == 0 ]] ; then
-  PS1="$RED\u@$NORMAL\h $RED[\w]$NORMAL\\$ "
+  USERCOLOR="$RED"
 else
-  PS1="$GREEN\u@$NORMAL\h $GREEN[\w]$NORMAL\\$ "
+  USERCOLOR="$GREEN"
 fi
+PS1="$CYAN[\D{%Y-%m-%d %H:%M.%S}] $GREEN\w$RED\$(parse_git_branch)\n$USERCOLOR[\u@$CYAN\h]$NORMAL \[\033(0\]b\[\033(B\] $NORMAL"
 
-unset script RED GREEN NORMAL
+unset script RED GREEN YELLOW NORMAL USERCOLOR
 
 # This will run the script that knows the current environment settings and will execute setEnv
 #   (/usr/local/bin is hardcoded for now - have to start somewhere...)
@@ -56,9 +64,11 @@ alias cdad='cd $DATA_DIR'
 alias cdap='cd $APP_DIR'
 alias cdcfp='cd $APP_DIR'
 alias cdb='cd $BIN_DIR'
-alias cdet='cd $ETC_DIR'
+alias cdetc='cd $ETC_DIR'
 alias cdl='cd $LOG_DIR'
 alias pse='ps -ef'
+alias cfpenv='$BASE_DIR/bin/cfpRetrieveEnv.sh'
+alias dc='dc=docker-compose'
 
 LogStop
 
